@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">	
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="keywords" content="아프리카TV,afreecaTV,개인방송,VR">
+		<meta name="Description" content="아프리카TV VR">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi"><!-- 모바일전용 -->
+		<link rel="shortcut icon" type="image/x-icon" href="/afreeca.ico">
+		
+        <link rel="stylesheet" type="text/css" href="css/vr.css">
+		<!-- pc only -->
+		<link rel="stylesheet" type="text/css" href="/css/global/vr/pc.css">
+		<!-- mobile only -->
+		<link rel="stylesheet" type="text/css" href="/css/global/mobile/mobileweb_reset.css">
+		<!-- css -->		
+		<link rel="stylesheet" type="text/css" href="//www.afreecatv.com/vr/player/css/vr.css">
+		<link rel="stylesheet" type="text/css" href="/css/global/vr/main.css"><!-- VR 기본 CSS -->
+		<!–[if lt IE 9]> 
+			<link rel="stylesheet" type="text/css" href="/css/global/vr/ie8under.css"><!-- ie8이하용 -->
+		<![endif]–>
+		
+        <script type="text/javascript" src="js/lib/jquery-1.12.2.min.js"></script>
+        <script type="text/javascript" src="js/lib/Promise.js"></script>
+        <script type="text/javascript" src="js/lib/tree/three.min.js"></script>
+        <script type="text/javascript" src="js/lib/tree/threex.videotexture.js"></script>
+        <script type="text/javascript" src="js/lib/tree/three.stereoeffect.js"></script>
+        <script type="text/javascript" src="js/lib/tree/VRControls.js"></script>
+        <script type="text/javascript" src="js/lib/tree/VREffect.js"></script>
+        <script type="text/javascript" src="js/lib/tree/OrbitControls.js"></script>
+        <script type="text/javascript" src="js/lib/tree/webvr-polyfill.js"></script>
+        <script type="text/javascript" src="js/lib/tree/webvr-manager.js"></script>
+        <script type="text/javascript" src="js/lib/hls/hls.js"></script>
+        <script type="text/javascript" src="flash/swfobject.js"></script>
+        <script>
+
+			Number.prototype.toHHMMSS = function () {
+					var sec_num = parseInt(this);
+					var hours   = Math.floor(sec_num / 3600);
+					var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+					var seconds = sec_num - (hours * 3600) - (minutes * 60);
+					if (hours   < 10) {hours   = "0"+hours;}
+					if (minutes < 10) {minutes = "0"+minutes;}
+					if (seconds < 10) {seconds = "0"+seconds;}
+					var time    = hours+':'+minutes+':'+seconds;
+					return time;
+			}
+			String.prototype.toHHMMSS = function () {
+					var milisec_num = parseInt(this, 10); // don't forget the second 
+					return milisec_num.toHHMMSS();
+			}
+
+			/* get stream from query string */
+			function getParameterByName ( name ) {
+				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+						results = regex.exec(location.search);
+				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+			}
+
+			function isMobile () {
+				return /Android/i.test(navigator.userAgent) ||
+						/iPhone|iPad|iPod/i.test(navigator.userAgent);
+			}
+			function getInternetExplorerVersion ()
+			{
+				var sAgent = window.navigator.userAgent;
+				var Idx = sAgent.indexOf("MSIE");
+
+				// If IE, return version number.
+				if ( Idx > 0 )
+					return parseInt(sAgent.substring(Idx + 5, sAgent.indexOf(".", Idx)));
+				// If IE 11 then look for Updated user agent string.
+				else if ( !!navigator.userAgent.match(/Trident\/7\./) )
+					return 11;
+				else
+					return 0; //It is not IE
+			}
+
+        </script>
+		<script id="recommend-template" type="text/template">			
+			<li>
+				<div><a id="link" href="#n" target="_top">
+					<span class="thum"><img id="re_thumbnail" src="//www.afreecatv.com/images/vr/new/thum1.jpg" alt="제목"></span>
+					<div class="info">
+						<span class="cate">여행</span>
+						<span class="name">그녀의영국</span>
+						<span class="tit">롤러코스터 체험 롤러코스터 체험 롤러코스터 체험 롤러코스터 체험 롤러코스터 체험</span>
+						<span class="time">12:00</span>
+					</div>
+					<span class="dark"></span>
+				</a></div>
+			</li>	
+		</script>
+    </head>
+    <body>
+
+        <div class="sign">
+            <img id="readyImg"  alt="">
+        </div>
+
+        <div id="vr-player"  class="vr-menu-container vr-menu-mono vr-menu-quality-1080p vr-menu-proj-sphere vr-menu-init vr-menu-paused   vr-menu-min vr-menu-options-off vr-menu-active vr-menu-controls_off " tabindex="1000">
+
+            <div id="vr-video" width="1280" height="720">
+            </div>
+
+            <div class="vr-menu-scrubber">
+                <span>2:36</span>
+                <div class="vr-menu-scrubber-triangle">
+                </div>
+            </div>
+            <div class="vr-menu-end-menu">
+            </div>
+
+
+            <div class="vr-menu-poster">
+                <div class="vr-menu-poster-play-container"><div class="vr-menu-poster-icon vr-menu-poster-icon-ready" tabindex="0"></div></div>
+				<div class="vr-menu-thum"><img id="thumbnail" ></div>
+
+				<!-- vr 가이드 2016-03-03 수정 -->
+				<div class="layer_vr">
+					<div class="cont1"><p>파노라마 모드 <span class="br">사용 설명</span><a href="#n" class="link_more">자세히보기</a></p></div>
+					<div class="cont2"><p>헤드셋 모드 <span class="br">사용 설명</span><a href="#n" class="link_more">자세히보기</a></p></div>
+				</div>
+            </div>
+
+            <div class="vr-menu-loading" style="display: none">
+                <div class="loader">Loading...</div>
+            </div>
+
+            <div class="vr-menu-controls">
+                <div tabindex="1100" class="vr-menu-control vr-menu-play">
+					<div class="vr-menu-icon vr-menu-icon-play">play</div>
+					<div class="vr-menu-icon vr-menu-icon-pause">pause</div>
+					<div class="vr-menu-icon vr-menu-icon-replay">replay</div>                    
+                </div>
+				<div class="vr-menu-control vr-menu-mute-container">
+					<div tabindex="1200" class="vr-menu-control vr-menu-volume">
+						<div class="vr-menu-icon vr-menu-icon-volume">volume</div>
+						<div class="vr-menu-mute-hover-area" style="top: -10px;">
+							<div class="vr-menu-control vr-menu-volume-control">
+								<div class="vr-menu-volume-slider">
+									<div class="vr-menu-seek-handle""></div>
+									<div class="vr-menu-volume-progress" style="width: 50%;"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 시간 2016-03-03 추가 -->
+				<div class="vr-menu-control vr-menu-time"><em id="current" class="now">00:00:00</em> / <span id="duration">00:00:00</span></div>
+				<!-- /시간 -->
+				<div tabindex="1300" class="vr-menu-control vr-menu-maximize">
+					<div class="vr-menu-icon vr-menu-icon-maximize">maximize</div>
+					<div class="vr-menu-icon vr-menu-icon-minimize">minimize</div>
+				</div>
+				<div tabindex="1190" class="vr-menu-control vr-menu-vrtoggle">
+					<div class="cardboard-logo active"></div>
+				</div>
+				<!-- 세팅버튼 2016-03-03 수정 -->
+				<div tabindex="1180" class="vr-menu-control vr-menu-set-btn">
+					<div class="set-btn"></div>
+				</div>
+				<div class="set-quality">
+					<em>Video Quality</em>
+				</div>
+				<div class="vr-menu-progress-control">
+					<div class="vr-menu-progress-slider">
+						<div class="vr-menu-bg-progress"></div>
+						<div class="vr-menu-load-progress"></div>
+						<div class="vr-menu-play-progress"></div>
+						<!--<div class="vr-menu-seek-handle"></div>-->
+					</div>
+				</div>
+            </div>			
+			<!-- 종료후 추천영상 2016-03-16 추가 -->
+			<div class="vrrecomm" style="display:none">
+				<ul id="recommend_ul">				
+				</ul>
+			</div>
+
+        </div>
+
+
+        <script data-main="js/app.js" src="js/require.js"></script>
+    </body>
+</html>

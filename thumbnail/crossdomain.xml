@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<cross-domain-policy>
+    <allow-access-from domain="*.afreeca.com" to-ports="*" />
+    <allow-access-from domain="*.afreecatv.com" to-ports="*" />
+    <allow-http-request-headers-from domain="*.afreeca.com" headers="*" />
+    <allow-http-request-headers-from domain="*.afreecatv.com" headers="*" />
+</cross-domain-policy>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="css/vr.css">
+        <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="js/tree/three.min.js"></script>
+        <script type="text/javascript" src="js/tree/threex.videotexture.js"></script>
+        <script type="text/javascript" src="js/tree/three.stereoeffect.js"></script>
+        <script type="text/javascript" src="js/tree/VRControls.js"></script>
+        <script type="text/javascript" src="js/tree/VREffect.js"></script>
+        <script type="text/javascript" src="js/tree/OrbitControls.js"></script>
+        <script type="text/javascript" src="js/tree/webvr-polyfill.js"></script>
+        <script type="text/javascript" src="js/tree/webvr-manager.js"></script>
+        <script type="text/javascript" src="js/hls/hls.js"></script>
+        <script type="text/javascript" src="flash/swfobject.js"></script>
+        <style>
+            body{background-color: #000}
+            #flashContent {display:block;text-align:left};
+            .sign {text-align:center;background:#000}
+            .sign img {display:inline-block;width:100%;max-width:1024px;}
+
+            .layer_vr {position:absolute;left:0;top:0;width:233px;height:518px;background:url('http://www.afreeca.com/afevent/promotion/award2015/images/layer_vr.png') no-repeat center 0;}
+            .layer_vr .cont1 {position:absolute;left:40px;top:200px;}
+            .layer_vr .cont2 {position:absolute;left:40px;top:400px;}
+            .layer_vr p {color:#e2e2e2;font-size:16px;font-family:'NG','맑은고딕','dotum';letter-spacing:-1px;line-height:22px;}
+            .layer_vr .link_more {display:block;margin:15px 0 0 0;color:#777;font-size:14px;font-family:'NG','맑은고딕','dotum';letter-spacing:-1px;text-decoration:none;}
+            .layer_vr .link_more:hover {text-decoration:underline;}
+            @media (max-width:919px){
+                .layer_vr{display:none;width:0}
+            }
+        </style>
+
+        <script>
+			/* get stream from query string */
+			function getParameterByName ( name ) {
+				name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+				var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+						results = regex.exec(location.search);
+				return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+			}
+
+			function isMobile () {
+				return /Android/i.test(navigator.userAgent) ||
+						/iPhone|iPad|iPod/i.test(navigator.userAgent);
+			}
+
+			//var url = "http://175.123.88.42:1935/live/myStream/playlist.m3u8";
+			// var url = "http://1.234.55.230:1935/live/myStream/playlist.m3u8";
+			//var url = "http://1.234.55.230:1935/live/VR360/playlist.m3u8";
+			//var url = "http://175.123.88.73:1935/live/myStream/playlist.m3u8";
+			//var url = "http://event.bjlive.afreeca.gscdn.com/bjlive/_definst_/myStream/playlist.m3u8"
+			//var url = "http://event.bjlive.afreeca.gscdn.com/bjlive/_definst_/VR360/playlist.m3u8"
+			//var url = "http://vr.ucc-video.m.afreeca.com/afflv9/AFFLV/03/7/42/9_03_1451456738079898_2147483647.mp4";
+			//var url = "http://vr.ucc-video.m.afreeca.com/afflv9/AFFLV/02/7/22/9_02_1451534083633790_2147483647.mp4";
+			var url = getParameterByName('url');
+
+			function Player ( vrVideo ) {
+				var hls;
+				var player = this;
+
+				var $container = $('.vr-menu-container')
+				var video = vrVideo.getVideo();
+				//모바일 preload
+				if ( isMobile() )
+				{
+					video.src = url;
+				}
+
+				$(video).bind('canplay  error loadeddata loadedmetadata loadstart play playing pause timeupdatewaiting', function ( e ) {
+					switch ( e.type )
+					{
+						case 'loadstart':
+							if ( !isMobile() )
+							{
+								$('.vr-menu-loading').show();
+							}
+							break;
+						case 'play':
+							$('.vr-menu-loading').show();
+							break;
+						case 'playing':
+							$container.addClass('vr-menu-playing');
+							$('.vr-menu-poster').hide();
+							$('.vr-menu-loading').hide();
+							break;
+						case 'pause':
+							$container.removeClass('vr-menu-playing');
+							break;
+						case 'error':
+							$('.sign').show();
+							$('#flashContent').show();
+							$('.vr-menu-container').hide();
+							$('#readyImg').attr("src", "http://www.afreeca.com/afevent/promotion/award2015/images/m/sign2.gif");
+							break;
+
+					}
+				})
+
+				//전체화면
+				document.addEventListener('fullscreenchange', onFullscreenChange);
+				document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+				document.addEventListener('mozfullscreenchange', onFullscreenChange);
+				//마우스
+				$container.on('mouseover', function () {
+					$container.addClass('vr-menu-mouseover');
+				});
+				$container.on('mouseout', function () {
+					$container.removeClass('vr-menu-mouseover');
+				});
+				function isFullscreen () {
+					return (document.fullScreenElement || document.mozFullScreenElement || document.isFullScreen || document.webkitIsFullScreen || document.mozIsFullScreen || document.msIsFullScreen || false);
+				}
+				function onFullscreenChange ( e ) {
+					console.log('onFullscreenChange', e);
+					var isFull = isFullscreen();
+					if ( isFull )
+					{
+						$container.addClass('vr-menu-full').removeClass('vr-menu-min');
+						$container.removeClass('vr-menu-inactive').addClass('vr-menu-active');
+
+					} else
+					{
+						$container.removeClass('vr-menu-full').addClass('vr-menu-min');
+						$container.addClass('vr-menu-inactive').removeClass('vr-menu-active');
+					}
+				}
+
+
+
+				//Play 버튼
+				$('.vr-menu-icon-play, .vr-menu-poster-play-container').click(function ( e ) {
+					player.play();
+				})
+				$('.vr-menu-icon-pause').click(function ( e ) {
+					player.pause();
+				})
+				//VR모드
+				$('.vr-menu-vrtoggle').click(function ( e ) {
+					if ( !manager.isVRMode() ) {
+						$container.addClass('vr-menu-stereo');
+						manager.enterVR();
+					} else {
+						$container.removeClass('vr-menu-stereo');
+						manager.exitVR();
+					}
+				})
+				$('.vr-menu-volume').click(function ( e ) {
+					if ( player.getVolume() > 0 )
+					{
+
+					} else
+					{
+
+					}
+				})
+				//전체화면
+				$('.vr-menu-maximize').click(function ( e ) {
+					player.toggleFullScreen();
+				})
+				var dragX = 0;
+				var bDrag = false;
+				$('.vr-menu-progress-slider').bind('mousedown mousemove mouseup mouseleave', function ( event ) {
+					switch ( event.type ) {
+						case 'mousedown':
+							dragX = event.pageX - event.currentTarget.offsetLeft;
+							$('.vr-menu-play-progress').width(dragX);
+							$('.vr-menu-seek-handle').css('left', dragX);
+							bDrag = true;
+							player.setVolume(posToVolume(dragX));
+
+							$('body').bind('mousemove mouseup', function ( event ) {
+								console.log(event, event.pageX)
+
+							})
+							break;
+						case 'mousemove':
+							if ( bDrag ) {
+								dragX = event.pageX - event.currentTarget.offsetLeft;
+								dragX = Math.min(event.currentTarget.clientWidth - 4, dragX)
+								$('.vr-menu-play-progress').width(dragX);
+								$('.vr-menu-seek-handle').css('left', dragX);
+								player.setVolume(posToVolume(dragX));
+							}
+							break;
+						case 'mouseup':
+							bDrag = false;
+							break;
+					}
+
+				})
+
+
+
+
+				function posToVolume ( pos ) {
+					var width = $('.vr-menu-progress-slider').get(0).clientWidth - 4;
+					return Math.min(1, Math.max(0, (pos / width)));
+				}
+				function volumeToPos ( volume ) {
+					var width = $('.vr-menu-progress-slider').get(0).clientWidth - 4;
+					return width * volume;
+				}
+
+				this.setVolume = function ( value ) {
+					var initPos = volumeToPos(value);
+					$('.vr-menu-play-progress').width(initPos);
+					$('.vr-menu-seek-handle').css('left', initPos);
+					video.volume = value;
+				}
+				this.getVolume = function () {
+					return video.volume;
+				}
+
+				this.play = function ()
+				{
+					if ( isMobile() )
+					{
+						video.play();
+
+					} else
+					{
+						if ( url.indexOf('m3u8') > 0 ) {
+
+							hls = new Hls();
+							hls.loadSource(url);
+							hls.attachMedia(video);
+							hls.on(Hls.Events.MANIFEST_PARSED, function () {
+								video.play();
+							});
+							hls.on(Hls.Events.ERROR, function ( errType, event ) {
+								console.log(errType, event)
+								switch ( event.type ) {
+									case 'hlsNetworkError':
+										$('.sign').show();
+										$('#flashContent').show();
+										$('.vr-menu-container').hide();
+										$('#readyImg').attr("src", "http://www.afreeca.com/afevent/promotion/award2015/images/m/sign2.gif");
+										break;
+								}
+							});
+						} else
+						{
+							video.src = url;
+							video.play();
+						}
+					}
+				}
+				this.pause = function ()
+				{
+					video.pause();
+				}
+
+				this.toggleFullScreen = function ()
+				{
+					var element = document.documentElement;
+					if ( !document.fullscreenElement && // alternative standard method
+							!document.mozFullScreenElement && !document.webkitFullscreenElement ) {  // current working methods
+						if ( element.requestFullscreen ) {
+							element.requestFullscreen();
+						} else if ( element.mozRequestFullScreen ) {
+							element.mozRequestFullScreen();
+						} else if ( element.webkitRequestFullscreen ) {
+							element.webkitRequestFullscreen();
+						} else if ( element.msRequestFullscreen ) {
+							element.msRequestFullscreen();
+						}
+					} else {
+						if ( document.cancelFullScreen ) {
+							document.cancelFullScreen();
+						} else if ( document.mozCancelFullScreen ) {
+							document.mozCancelFullScreen();
+						} else if ( document.webkitCancelFullScreen ) {
+							document.webkitCancelFullScreen();
+						}
+					}
+				}
+
+				player.setVolume(player.getVolume());
+
+
+			}
+
+			function VRVideo () {
+
+				// video element 생성
+				var video = document.createElement('video');
+				video.setAttribute('crossorigin', 'anonymous'); //The video element contains cross-origin data
+
+
+
+				var renderer = new THREE.WebGLRenderer({antialias : true});
+				renderer.autoClear = false;
+				renderer.setClearColor(0x000000);
+				$('#container').append(renderer.domElement)
+
+
+
+				// set camera position so that OrbitControls works properly.
+				var resolutionRate = 16 / 9
+				camera = new THREE.PerspectiveCamera(75, resolutionRate, 1, 10000);
+				camera.position.z = 0.0001;
+
+				var controls = new THREE.VRControls(camera);
+				// Initialize the WebVR manager.
+				manager = new WebVRManager(renderer);
+
+				// panorma mesh
+				var geometry = new THREE.SphereGeometry(1000, 60, 60);
+				geometry.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+
+				//Vieo Texture 생성
+				videoTexture = new THREEx.VideoTexture(video);
+				videoTexture.minFilter = THREE.LinearFilter;
+
+				//Material
+				var material = new THREE.MeshBasicMaterial({map : videoTexture});
+
+				//Mesh
+				var mesh = new THREE.Mesh(geometry, material);
+				mesh.renderDepth = 2;
+				mesh.rotation.set(0, -90 * Math.PI / 180, 0);
+
+				//Scene
+				var scene = new THREE.Scene();
+				scene.add(mesh);
+
+
+				//리사이즈
+				$(window).on("resize orientationchange", onWindowResize);
+				onWindowResize();
+
+				// window events
+				function onWindowResize () {
+					var width = window.innerWidth;
+					var height = Math.ceil(width / 16 * 9);
+					camera.aspect = resolutionRate;
+					camera.updateProjectionMatrix();
+					manager.setSize(window.innerWidth, height);
+				}
+
+				function animate () {
+					controls.update();
+					manager.render(scene, camera);
+					window.requestAnimationFrame(animate);
+				}
+				window.requestAnimationFrame(animate);
+
+				this.getVideo = function () {
+					return video;
+				}
+			}
+			function getInternetExplorerVersion ()
+			{
+				var sAgent = window.navigator.userAgent;
+				var Idx = sAgent.indexOf("MSIE");
+
+				// If IE, return version number.
+				if ( Idx > 0 )
+					return parseInt(sAgent.substring(Idx + 5, sAgent.indexOf(".", Idx)));
+				// If IE 11 then look for Updated user agent string.
+				else if ( !!navigator.userAgent.match(/Trident\/7\./) )
+					return 11;
+				else
+					return 0; //It is not IE
+			}
+
+			$(document).ready(function () {
+
+
+				function start () {
+					if ( getInternetExplorerVersion() > 0 )
+					{
+						var videoUrl = url;
+						//HLS to RTMP;
+						if ( videoUrl.indexOf('m3u8') > 0 ) {
+							videoUrl = videoUrl.replace('http:', 'rtmp:');
+							videoUrl = videoUrl.replace('/playlist.m3u8', '');
+							videoUrl = videoUrl.replace('/_definst_', '');
+						}
+						//HLS to RTMP;
+						if ( videoUrl.indexOf('ucc-video.m.afreeca.com') > 0 ) {
+							var aUrl = videoUrl.split('/');
+							videoUrl = 'rtmp://1.255.48.142/' + aUrl[3] + '/_definst_/mp4:' + aUrl.slice(4).join('/');
+						}
+						var flashvars = {};
+						flashvars.video = videoUrl;
+						flashvars.share = false;
+						flashvars.autoplay = true;
+
+						var params = {quality : 'high', bgcolor : '#000000', allowscriptaccess : 'always', allowfullscreen : 'true'};
+						var attributes = {id : 'VRPlayer', name : 'VRPlayer', align : 'middle'};
+						swfobject.embedSWF(
+								"flash/VRPlayer.swf", "flashContent",
+								"100%", "100%",
+								"10.2.0", "",
+								flashvars, params, attributes);
+
+						$('.vr-menu-container').hide();
+					} else
+					{
+						var vrVideo = new VRVideo();
+						var player = new Player(vrVideo);
+					}
+				}
+
+
+
+				$('.sign').hide();
+				start();
+
+			});
+
+
+
+        </script>
+    </head>
+    <body>
+        <div class="sign">
+            <img id="readyImg"  alt="">
+        </div>
+        <div id="flashContent">
+        </div>
+
+        <div  class="vr-menu-container vr-menu-mono vr-menu-quality-1080p vr-menu-proj-sphere vr-menu-init vr-menu-paused   vr-menu-min vr-menu-options-off vr-menu-active  " tabindex="1000">
+
+            <div id="container" width="1280" height="720" style="display:block;width: 100%; height: 100%;background-color: #000" >
+            </div>
+
+            <div class="vr-menu-scrubber">
+                <span>2:36</span>
+                <div class="vr-menu-scrubber-triangle">
+                </div>
+            </div>
+            <div class="vr-menu-end-menu">
+            </div>
+
+
+            <div class="vr-menu-poster" style=" background-image: linear-gradient(rgba(0, 0, 0, 0.701961) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.701961) 100%), url(http://www.afreeca.com/afevent/promotion/award2015/images/sign0.jpg); ">
+                <div class="vr-menu-poster-play-container"><div class="vr-menu-poster-icon vr-menu-poster-icon-ready" tabindex="0"></div></div>
+
+                <div class="layer_vr">
+                    <div class="cont1">
+                        <p>Click + Drag<br />키보드, 게임패드 또는<br />모바일기기를 사용할 수 <br />있습니다.</p>
+                        <a href="javascript:parent.link('input')" class="link_more">자세히 알아보기</a>
+                    </div>
+                    <div class="cont2">
+                        <p>VR전용 헤드셋(HMD)을<br />가지고 계신가요?</p>
+                        <a href="javascript:parent.link('hmd')" class="link_more">자세히 알아보기</a>
+                    </div>
+                </div>                
+
+                <!-- 자측 VR 가이
+                <div class="vr-menu-poster-instructions">
+                    <div class="vr-menu-poster-instructions-controls">
+                    <div class="cont1">
+                        <p>Click + Drag<br />키보드, 게임패드 또는<br />모바일기기를 사용할 수 <br />있습니다.</p>
+                        <a href="#" class="link_more">자세히 알아보기</a>
+                    </div>
+                    </div>
+                    <div class="vr-menu-poster-instructions-headset">
+                        <div class="vr-menu-instructions-section">
+                            <div class="img">
+                                <svg viewbox="0 0 32 32" class="vr-menu-icon vr-menu-icon-headset">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="css/svgdefs.svg#icon-headset">
+                                </use>
+                                </svg>
+                            </div>
+                            <span class="copy">Have a headset<br> and want to watch<br> in virtual reality? </span>
+                            <a target="_blank" href="http://support.vrideo.com/knowledgebase/articles/503390">LEARN MORE</a>
+                        </div>
+                    </div>
+                </div>-->
+            </div>
+
+            <div class="vr-menu-loading" style="display: none">
+                <div class="loader">Loading...</div>
+            </div>
+
+            <div class="vr-menu-controls">
+                <div tabindex="1100" class="vr-menu-control vr-menu-play">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="vr-menu-icon vr-menu-icon-play" viewBox="0 0 819 1024" xmlns:NS1="http://www.w3.org/2000/svg" NS1:viewbox="0 0 32 32">
+                    <title>play</title>
+                    <path class="path1" d="M 0 43.469 c 0 -41.719 30.689 -55.922 68.183 -31.535 l 688.8 447.716 c 37.494 24.367 37.494 64.265 0 88.633 l -688.8 447.716 c -37.494 24.386 -68.183 10.183 -68.183 -31.535 v -920.993 Z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="vr-menu-icon vr-menu-icon-pause" viewBox="0 0 555 1024" xmlns:NS2="http://www.w3.org/2000/svg" NS2:viewbox="0 0 32 32">
+                    <title>pause</title>
+                    <path class="path1" d="M 0 115.81 v 792.381 c 0 47.128 38.205 85.333 85.333 85.333 s 85.333 -38.205 85.333 -85.333 v -792.381 c 0 -47.128 -38.205 -85.333 -85.333 -85.333 s -85.333 38.205 -85.333 85.333 v 0 Z" />
+                    <path class="path2" d="M 384 115.81 v 792.381 c 0 47.128 38.205 85.333 85.333 85.333 s 85.333 -38.205 85.333 -85.333 v -792.381 c 0 -47.128 -38.205 -85.333 -85.333 -85.333 s -85.333 38.205 -85.333 85.333 v 0 Z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="vr-menu-icon vr-menu-icon-replay" viewBox="0 0 1243 1024" xmlns:NS3="http://www.w3.org/2000/svg" NS3:viewbox="0 0 32 32">
+                    <title>replay</title>
+                    <path class="path1" d="M 534.841 18.625 c -285.872 0 -518.536 223.033 -518.536 499.342 c 0 270.331 223.141 490.674 502.027 499.099 l 56.514 1.707 v -150.022 l -53.03 -1.767 c -197.416 -6.578 -353.628 -161.3 -353.628 -349.018 c 0 -192.355 163.65 -349.26 366.653 -349.26 c 174.495 0 323.335 116.919 358.794 276.75 l 53.555 -66.738 h -243.651 l 265.568 348.203 l 265.47 -348.203 h -244.48 l 53.789 44.083 c -46.791 -233.592 -259.892 -404.177 -509.045 -404.177 v 0 Z" />
+                    </svg>
+                </div>
+                <div class="vr-menu-control vr-menu-mute-container">
+                    <div tabindex="1200" class="vr-menu-control vr-menu-volume">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="vr-menu-icon vr-menu-icon-volume" viewBox="0 0 1024 1024" xmlns:NS4="http://www.w3.org/2000/svg" NS4:viewbox="0 0 32 32">
+                        <title>volume</title>
+                        <path class="path1" d="M 716.8 102.4 l -460.812 274.61 h -204.788 v 377.922 h 219.592 l 446.008 265.79 v -918.322 Z" />
+                        </svg>
+                        <div class="vr-menu-mute-hover-area" style="top: -10px;">
+                            <div class="vr-menu-control vr-menu-volume-control" style="display: none;">
+                                <div class="vr-menu-volume-slider">
+                                    <div class="vr-menu-seek-handle">
+                                    </div>
+                                    <div class="vr-menu-volume-progress" style="height: 50%;">
+                                    </div>
+                                    <div class="vr-menu-volume-fill">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div tabindex="1300" class="vr-menu-control vr-menu-maximize">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="vr-menu-icon vr-menu-icon-maximize" viewBox="0 0 1084 1024" xmlns:NS5="http://www.w3.org/2000/svg" NS5:viewbox="0 0 32 32">
+                    <title>maximize</title>
+                    <path class="path1" d="M 120.471 328.471 h -120.471 v -328.471 h 367.523 v 120.471 h -307.287 l 60.235 -60.235 v 268.235 Z M 1042.33 328.471 h -120.471 v -268.235 l 60.235 60.235 h -307.287 v -120.471 h 367.523 v 328.471 Z M 921.862 639.059 h 120.471 v 328.471 h -367.523 v -120.471 h 307.287 l -60.235 60.235 v -268.235 Z M 0 639.059 h 120.471 v 268.235 l -60.235 -60.235 h 307.287 v 120.471 h -367.523 v -328.471 Z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="vr-menu-icon vr-menu-icon-minimize" viewBox="0 0 1081 1024" xmlns:NS6="http://www.w3.org/2000/svg" NS6:viewbox="0 0 32 32">
+                    <title>minimize</title>
+                    <path class="path1" d="M 233.327 0 h 113.778 v 310.222 h -347.105 v -113.778 h 290.216 l -56.889 56.889 v -253.333 Z M 694.209 0 h 113.778 v 253.333 l -56.889 -56.889 h 290.216 v 113.778 h -347.105 v -310.222 Z M 807.987 970.667 h -113.778 v -310.222 h 347.105 v 113.778 h -290.216 l 56.889 -56.889 v 253.333 Z M 347.105 970.667 h -113.778 v -253.333 l 56.889 56.889 h -290.216 v -113.778 h 347.105 v 310.222 Z" />
+                    </svg>
+                </div>
+                <div tabindex="1190" class="vr-menu-control vr-menu-vrtoggle">
+                    <div class="cardboard-logo active"></div>
+                </div>
+                <div class="vr-menu-progress-control">
+                    <div class="vr-menu-progress-slider">
+                        <div class="vr-menu-bg-progress">
+                        </div>
+                        <div class="vr-menu-load-progress">
+                        </div>
+                        <div class="vr-menu-play-progress">
+                        </div>
+                        <div class="vr-menu-seek-handle">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
